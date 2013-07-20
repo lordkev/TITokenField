@@ -27,7 +27,6 @@
 	NSMutableArray * _resultsArray;
 	UIPopoverController * _popoverController;
 }
-@dynamic delegate;
 @synthesize showAlreadyTokenized = _showAlreadyTokenized;
 @synthesize searchSubtitles = _searchSubtitles;
 @synthesize tokenField = _tokenField;
@@ -58,7 +57,6 @@
 - (void)setup {
 	
 	[self setBackgroundColor:[UIColor clearColor]];
-	[self setDelaysContentTouches:YES];
 	[self setMultipleTouchEnabled:NO];
 	
 	_showAlreadyTokenized = NO;
@@ -70,7 +68,6 @@
 	[_tokenField addTarget:self action:@selector(tokenFieldDidEndEditing:) forControlEvents:UIControlEventEditingDidEnd];
 	[_tokenField addTarget:self action:@selector(tokenFieldTextDidChange:) forControlEvents:UIControlEventEditingChanged];
 	[_tokenField addTarget:self action:@selector(tokenFieldFrameWillChange:) forControlEvents:TITokenFieldControlEventFrameWillChange];
-	[_tokenField addTarget:self action:@selector(tokenFieldFrameDidChange:) forControlEvents:TITokenFieldControlEventFrameDidChange];
 	[_tokenField setDelegate:self];
 	[self addSubview:_tokenField];
 	[_tokenField release];
@@ -117,7 +114,6 @@
 	
 	[self bringSubviewToFront:_separator];
 	[self bringSubviewToFront:_tokenField];
-	[self updateContentSize];
 }
 
 #pragma mark Property Overrides
@@ -136,12 +132,6 @@
 		[self presentpopoverAtTokenFieldCaretAnimated:NO];
 	}
 	
-	[self updateContentSize];
-	[self layoutSubviews];
-}
-
-- (void)setContentOffset:(CGPoint)offset {
-	[super setContentOffset:offset];
 	[self layoutSubviews];
 }
 
@@ -154,14 +144,11 @@
 	
 	[super layoutSubviews];
 	
-	CGFloat relativeFieldHeight = CGRectGetMaxY(_tokenField.frame) - self.contentOffset.y;
+	CGFloat relativeFieldHeight = CGRectGetMaxY(_tokenField.frame);
 	CGFloat newHeight = self.bounds.size.height - relativeFieldHeight;
 	if (newHeight > -1) [_resultsTable setFrame:((CGRect){_resultsTable.frame.origin, {_resultsTable.bounds.size.width, newHeight}})];
 }
 
-- (void)updateContentSize {
-	[self setContentSize:CGSizeMake(self.bounds.size.width, CGRectGetMaxY(_contentView.frame) + 1)];
-}
 
 - (BOOL)canBecomeFirstResponder {
 	return YES;
@@ -246,10 +233,6 @@
 	[_separator setFrame:((CGRect){{_separator.frame.origin.x, tokenFieldBottom}, _separator.bounds.size})];
 	[_resultsTable setFrame:((CGRect){{_resultsTable.frame.origin.x, (tokenFieldBottom + 1)}, _resultsTable.bounds.size})];
 	[_contentView setFrame:((CGRect){{_contentView.frame.origin.x, (tokenFieldBottom + 1)}, _contentView.bounds.size})];
-}
-
-- (void)tokenFieldFrameDidChange:(TITokenField *)field {
-	[self updateContentSize];
 }
 
 #pragma mark Results Methods
@@ -358,7 +341,6 @@
 }
 
 - (void)dealloc {
-	[self setDelegate:nil];
 	[_resultsArray release];
 	[_sourceArray release];
 	[_popoverController release];

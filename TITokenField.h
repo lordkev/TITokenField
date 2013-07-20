@@ -54,7 +54,7 @@
 //==========================================================
 #pragma mark - TITokenFieldView -
 //==========================================================
-@interface TITokenFieldView : UIScrollView <UITableViewDelegate, UITableViewDataSource, TITokenFieldDelegate>
+@interface TITokenFieldView : UIView <UITableViewDelegate, UITableViewDataSource, TITokenFieldDelegate>
 @property (nonatomic, assign) BOOL showAlreadyTokenized;
 @property (nonatomic, assign) BOOL searchSubtitles;
 @property (nonatomic, readonly) TITokenField * tokenField;
@@ -63,8 +63,6 @@
 @property (nonatomic, readonly) UIView * contentView;
 @property (nonatomic, copy) NSArray * sourceArray;
 @property (nonatomic, readonly) NSArray * tokenTitles;
-
-- (void)updateContentSize;
 
 @end
 

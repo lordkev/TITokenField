@@ -142,7 +142,6 @@
 		
 	[_tokenFieldView.contentView setFrame:newFrame];
 	[textView setFrame:newTextFrame];
-	[_tokenFieldView updateContentSize];
 }
 
 @end

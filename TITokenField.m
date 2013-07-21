@@ -1132,12 +1132,8 @@ CGPathRef CGPathCreateDisclosureIndicatorPath(CGPoint arrowPointFront, CGFloat h
 	}
 	else
 	{
-		CGContextClip(context);
-		CGFloat locations[2] = {0, 0.95};
-		CGFloat components[8] = {red + 0.2, green + 0.2, blue + 0.2, alpha, red, green, blue, 0.8};
-		CGGradientRef gradient = CGGradientCreateWithColorComponents(colorspace, components, locations, 2);
-		CGContextDrawLinearGradient(context, gradient, CGPointZero, endPoint, 0);
-		CGGradientRelease(gradient);
+        CGContextSetFillColor(context, (CGFloat[4]){red, green, blue, 0.8});
+		CGContextFillPath(context);
 	}
 	
 	CGContextRestoreGState(context);
@@ -1151,24 +1147,22 @@ CGPathRef CGPathCreateDisclosureIndicatorPath(CGPoint arrowPointFront, CGFloat h
     CGContextFillPath(context);
     CGContextRestoreGState(context);
 	
-	// Draw the inner gradient.
-	CGContextSaveGState(context);
-	CGContextAddPath(context, innerPath);
-	CGPathRelease(innerPath);
-	CGContextClip(context);
-	
-	CGFloat locations[2] = {0, (drawHighlighted ? 0.9 : 0.6)};
-    CGFloat highlightedComp[8] = {red, green, blue, 0.7, red, green, blue, 1};
-    CGFloat nonHighlightedComp[8] = {red, green, blue, 0.15, red, green, blue, 0.3};
-	
-	CGGradientRef gradient = CGGradientCreateWithColorComponents(colorspace, (drawHighlighted ? highlightedComp : nonHighlightedComp), locations, 2);
-	CGContextDrawLinearGradient(context, gradient, CGPointZero, endPoint, 0);
-	CGGradientRelease(gradient);
-	CGContextRestoreGState(context);
-	
+	// Draw the inner fill if selected
+    if (drawHighlighted) {
+        CGContextSaveGState(context);
+        CGContextAddPath(context, innerPath);
+        CGContextSetFillColor(context, (CGFloat[4]){red, green, blue, 1.0});
+        CGContextFillPath(context);
+        CGContextRestoreGState(context);
+        CGPathRelease(innerPath);
+    }
+
 	CGFloat accessoryWidth = 0;
 	
 	if (_accessoryType == TITokenAccessoryTypeDisclosureIndicator){
+        
+        CGFloat highlightedComp[8] = {red, green, blue, 0.7, red, green, blue, 1};
+        
 		CGPoint arrowPoint = CGPointMake(self.bounds.size.width - floorf(hTextPadding / 2), (self.bounds.size.height / 2) - 1);
 		CGPathRef disclosurePath = CGPathCreateDisclosureIndicatorPath(arrowPoint, _font.pointSize, kDisclosureThickness, &accessoryWidth);
 		accessoryWidth += floorf(hTextPadding / 2);
@@ -1213,17 +1207,40 @@ CGPathRef CGPathCreateDisclosureIndicatorPath(CGPoint arrowPointFront, CGFloat h
 	CGFloat titleWidth = ceilf(self.bounds.size.width - hTextPadding - accessoryWidth);
 	CGRect textBounds = CGRectMake(floorf(hTextPadding / 2), vPadding - 1, titleWidth, floorf(self.bounds.size.height - (vPadding * 2)));
 	
-	CGContextSetFillColor(context, (drawHighlighted ? (CGFloat[4]){1, 1, 1, 1} : (CGFloat[4]){0, 0, 0, 1}));
+	CGContextSetFillColor(context, (drawHighlighted ? (CGFloat[4]){1, 1, 1, 1} : (CGFloat[4]){0, 0, 1, 1}));
 	[_title drawInRect:textBounds withFont:_font lineBreakMode:kLineBreakMode];
 }
 
 CGPathRef CGPathCreateTokenPath(CGSize size, BOOL innerPath) {
 	
 	CGMutablePathRef path = CGPathCreateMutable();
-	CGFloat arcValue = (size.height / 2) - 1;
-	CGFloat radius = arcValue - (innerPath ? (1 / [[UIScreen mainScreen] scale]) : 0);
-	CGPathAddArc(path, NULL, arcValue, arcValue, radius, (M_PI / 2), (M_PI * 3 / 2), NO);
-	CGPathAddArc(path, NULL, size.width - arcValue, arcValue, radius, (M_PI  * 3 / 2), (M_PI / 2), NO);
+
+    CGFloat radius = 4.0f;
+    
+    CGRect rect = innerPath ? CGRectInset(CGRectMake(0.0, 0.0, size.width, size.height), 1.0f, 1.0f) : CGRectMake(0.0, 0.0, size.width, size.height);
+    CGRect innerRect = CGRectInset(rect, radius, radius);
+    
+	CGFloat inside_right = innerRect.origin.x + innerRect.size.width;
+	CGFloat outside_right = rect.origin.x + rect.size.width;
+	CGFloat inside_bottom = innerRect.origin.y + innerRect.size.height;
+	CGFloat outside_bottom = rect.origin.y + rect.size.height;
+    
+	CGFloat inside_top = innerRect.origin.y;
+	CGFloat outside_top = rect.origin.y;
+	CGFloat outside_left = rect.origin.x;
+    
+	CGPathMoveToPoint(path, NULL, innerRect.origin.x, outside_top);
+    
+	CGPathAddLineToPoint(path, NULL, inside_right, outside_top);
+	CGPathAddArcToPoint(path, NULL, outside_right, outside_top, outside_right, inside_top, radius);
+	CGPathAddLineToPoint(path, NULL, outside_right, inside_bottom);
+	CGPathAddArcToPoint(path, NULL,  outside_right, outside_bottom, inside_right, outside_bottom, radius);
+    
+	CGPathAddLineToPoint(path, NULL, innerRect.origin.x, outside_bottom);
+	CGPathAddArcToPoint(path, NULL,  outside_left, outside_bottom, outside_left, inside_bottom, radius);
+	CGPathAddLineToPoint(path, NULL, outside_left, inside_top);
+	CGPathAddArcToPoint(path, NULL,  outside_left, outside_top, innerRect.origin.x, outside_top, radius);
+    
 	CGPathCloseSubpath(path);
 	
 	return path;

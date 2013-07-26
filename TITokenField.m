@@ -555,6 +555,19 @@ NSString * const kTextHidden = @"\u200D"; // Zero-Width Joiner
 	return [super beginTrackingWithTouch:touch withEvent:event];
 }
 
+- (id)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+    
+    if ([[super hitTest:point withEvent:event] isEqual:self.leftView]) {
+        if (CGRectContainsPoint(self.leftView.frame, point)) {
+            return self.leftView;
+        } else {
+            return self;
+        }
+    }
+    
+    return [super hitTest:point withEvent:event];
+}
+
 #pragma mark Token Handling
 - (TIToken *)addTokenWithTitle:(NSString *)title {
 	return [self addTokenWithTitle:title representedObject:nil];
